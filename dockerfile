@@ -47,7 +47,7 @@ COPY environment.yml .
 RUN /opt/conda/bin/conda env create -f environment.yml
 
 # instlal perl
-RUN apt update && apt install -y libfindbin-libs-perl g++
+RUN apt update && apt install -y libfindbin-libs-perl g++ curl
 
 # Pull busybox image
 FROM busybox:1.35.0-uclibc as busybox
@@ -78,6 +78,7 @@ COPY --from=builder /usr/bin/as /usr/bin/as
 COPY --from=builder /usr/bin/ar /usr/bin/ar
 COPY --from=builder /usr/bin/ld /usr/bin/ld
 COPY --from=builder /usr/bin/git /usr/bin/git
+COPY --from=builder /usr/bin/curl /usr/bin/curl
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
@@ -87,7 +88,9 @@ COPY --from=builder /usr/share/cmake /usr/share/cmake
 COPY --from=builder /usr/share/cmake-3.16 /usr/share/cmake-3.16
 COPY --from=builder /usr/share/perl5 /usr/share/perl5
 COPY --from=builder /usr/share/perl/5.30 /usr/share/perl/5.30
+COPY --from=builder /usr/share/git-core/templates /usr/share/git-core/templates
 COPY --from=builder /lib /lib
+COPY --from=builder /usr/lib/git-core /usr/lib/git-core
 COPY --from=builder /usr/lib/gcc /usr/lib/gcc
 COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
 COPY --from=builder /usr/lib/x86_64-linux-gnu/perl/5.30 /usr/lib/x86_64-linux-gnu/perl/5.30
