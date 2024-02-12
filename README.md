@@ -1,10 +1,6 @@
 # x-heep-docker
 This repository contains the dockerfile to build the [X-HEEP](https://github.com/esl-epfl/x-heep) docker (hosted on https://hub.docker.com/r/luigi2898/x-heep)
 
-# TO-DO
-
-- [ ] Implement dual-step build to reduce image size
-
 # Docker content
 
 - Verilator
@@ -18,7 +14,7 @@ This repository contains the dockerfile to build the [X-HEEP](https://github.com
 Pull the docker image from docker-hub:
 
 ```bash
-docker pull luigi2898/x-heep
+docker pull luigi2898/x-heep:light
 ```
 
 Once that the image is pulled you can clone X-HEEP (if needed) and directly run it:
@@ -28,7 +24,7 @@ X_HEEP_PATH=<path/to/x-heep/clone>
 
 git clone https://github.com/esl-epfl/x-heep $X_HEEP_PATH
 
-docker run -it -v $X_HEEP_PATH:/workspace/x-heep luigi2898/x-heep:latest
+docker run -it -v $X_HEEP_PATH:/workspace/x-heep luigi2898/x-heep:light
 ```
 
 Once that the docker is up and running, activate the virtual environment:
