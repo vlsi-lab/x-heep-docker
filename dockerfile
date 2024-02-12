@@ -79,6 +79,7 @@ COPY --from=builder /usr/bin/ar /usr/bin/ar
 COPY --from=builder /usr/bin/ld /usr/bin/ld
 COPY --from=builder /usr/bin/git /usr/bin/git
 COPY --from=builder /usr/bin/curl /usr/bin/curl
+COPY --from=builder /usr/bin/xargs /usr/bin/xargs
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
