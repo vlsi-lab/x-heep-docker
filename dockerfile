@@ -35,7 +35,7 @@ RUN rm -rf /riscv-gnu-toolchain
 RUN git clone https://github.com/llvm/llvm-project.git /llvm-project
 RUN cd /llvm-project && git checkout llvmorg-14.0.0 && mkdir build 
 RUN cd /llvm-project/build && cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$RISCV -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
-RUN cd /llvm-project/build && cmake --build . --target install
+RUN cd /llvm-project/build && cmake --build . --target install -j$(nproc)
 RUN rm -rf /llvm-project
 
 # Install Verilator
