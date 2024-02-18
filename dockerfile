@@ -1,20 +1,35 @@
+# Author: Luigi Giuffrida
+
+ARG riscv=/tools/riscv
+ARG verilator_version=4.210
+ARG verible_version=v0.0-1824-ga3b5bedf
+
+# First stage: build the environment
 FROM ubuntu:20.04 as builder
+
+# Import environment variables from global scope
+ARG riscv
+ARG verilator_version
+ARG verible_version
+ENV RISCV=${riscv}
+ENV VERILATOR_VERSION=${verilator_version}
+ENV VERIBLE_VERSION=${verible_version}
 
 # Install dependancies
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y lcov \
-    libelf1 libelf-dev libftdi1-2 libftdi1-dev libncurses5 libssl-dev \
-    libudev-dev libusb-1.0-0 lsb-release texinfo autoconf cmake flex bison \
-    libexpat-dev gawk tree xterm python3-venv python3-dev \
-    git wget python3 \
+    libelf1 libelf-dev libftdi1-2 libftdi1-dev libncurses5 libssl-dev libglib2.0-dev \
+    libudev-dev libusb-1.0-0 lsb-release texinfo autoconf automake autotools-dev \
+    libmpc-dev libmpfr-dev libgmp-dev gperf libtool patchutils bc zlib1g-dev \
+    cmake flex bison libexpat-dev gawk tree xterm python3-venv python3-dev ninja-build \
+    git wget python3 build-essential make coreutils libfindbin-libs-perl g++ curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GCC-RISC-V toolchain
 RUN git clone --branch 2022.01.17 --recursive https://github.com/riscv/riscv-gnu-toolchain /riscv-gnu-toolchain
 RUN cd /riscv-gnu-toolchain && ./configure --prefix=/tools/riscv --with-arch=rv32imc --with-abi=ilp32
 RUN apt update && apt install -y gcc build-essential make
-RUN cd /riscv-gnu-toolchain && make
-RUN rm /riscv-gnu-toolchain -rf
-ENV RISCV=/tools/riscv
+RUN cd /riscv-gnu-toolchain && make -j$(nproc)
+RUN rm -rf /riscv-gnu-toolchain
 
 # Install clang
 RUN git clone https://github.com/llvm/llvm-project.git /llvm-project
@@ -24,14 +39,12 @@ RUN cd /llvm-project/build && cmake --build . --target install
 RUN rm -rf /llvm-project
 
 # Install Verilator
-ENV VERILATOR_VERSION=4.210
 RUN git clone https://github.com/verilator/verilator.git && cd verilator && git checkout v$VERILATOR_VERSION
 RUN cd /verilator && autoconf && ./configure --prefix=/tools/verilator/$VERILATOR_VERSION
-RUN cd /verilator && make && make install
-RUN rm /verilator -rf
+RUN cd /verilator && make -j$(nproc) && make install
+RUN rm -rf /verilator
 
 # Install Verible
-ENV VERIBLE_VERSION=v0.0-2135-gb534c1fe
 RUN wget https://github.com/google/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz
 RUN mkdir -p /tools/verible && tar -xf verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz -C /tools/verible/
 RUN rm verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz
@@ -45,16 +58,21 @@ RUN rm Miniconda3-latest-Linux-x86_64.sh
 # Install conda environment
 COPY environment.yml .
 RUN /opt/conda/bin/conda env create -f environment.yml
-
-# instlal perl
-RUN apt update && apt install -y libfindbin-libs-perl g++ curl
+RUN rm environment.yml
 
 # Pull busybox image
 FROM busybox:1.35.0-uclibc as busybox
  
 # Pull distroless image
 FROM gcr.io/distroless/cc-debian12
- 
+
+ARG riscv
+ARG verilator_version
+ARG verible_version
+ENV RISCV=${riscv}
+ENV VERILATOR_VERSION=${verilator_version}
+ENV VERIBLE_VERSION=${verible_version}
+
 # Copy RISC-V toolchain from builder
 COPY --from=builder /tools/riscv /tools/riscv
 
@@ -120,11 +138,8 @@ COPY --from=busybox /bin/sed /bin/sed
 COPY --from=busybox /bin/find /bin/find
 COPY --from=busybox /bin/tr /bin/tr
 
-# Set environment variables
-ENV RISCV=/tools/riscv
-
 # Set PATH
-ENV PATH=/tools/verible/verible-v0.0-2135-gb534c1fe/bin:/tools/verilator/4.210/bin:/opt/conda/envs/core-v-mini-mcu/bin:/opt/conda/condabin:/tools/riscv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+ENV PATH=/tools/verible/verible-${VERIBLE_VERSION}/bin:/tools/verilator/${VERILATOR_VERSION}/bin:/opt/conda/envs/core-v-mini-mcu/bin:/opt/conda/condabin:${RISCV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Select workdir
 WORKDIR /workspace/x-heep
