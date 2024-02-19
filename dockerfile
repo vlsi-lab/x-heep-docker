@@ -100,6 +100,7 @@ COPY --from=builder /usr/bin/curl /usr/bin/curl
 COPY --from=builder /usr/bin/tail /usr/bin/tail
 COPY --from=builder /usr/bin/pkill /usr/bin/pkill
 COPY --from=builder /usr/bin/xargs /usr/bin/xargs
+COPY --from=builder /usr/bin/chmod /usr/bin/chmod
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
@@ -145,6 +146,6 @@ ENV PATH=/tools/verible/verible-${VERIBLE_VERSION}/bin:/tools/verilator/${VERILA
 WORKDIR /workspace/x-heep
 
 # Set conda environment
-RUN conda init bash
+RUN conda init bash && echo "conda activate core-v-mini-mcu" >> /root/.bashrc
 
 ENTRYPOINT ["/bin/bash"]
