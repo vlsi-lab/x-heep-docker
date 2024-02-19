@@ -148,4 +148,23 @@ WORKDIR /workspace/x-heep
 # Set conda environment
 RUN conda init bash && echo "conda activate core-v-mini-mcu" >> /root/.bashrc
 
+
+
+RUN echo "echo ' ' " >> /root/.bashrc
+RUN echo "echo '  ' " >> /root/.bashrc
+RUN echo "echo '  ' " >> /root/.bashrc
+RUN echo "echo '   @@@@        @@@              @@@        @@@    @@@@@@@@@@@@@    @@@@@@@@@@@@@   @@@@@@@@@@     ' " >> /root/.bashrc
+RUN echo "echo '   @@@@@     @@@@@              @@@        @@@    @@@@@@@@@@@@@@  @@@@@@@@@@@@@@   @@@@@@@@@@@@@  ' " >> /root/.bashrc
+RUN echo "echo '     @@@@   @@@@@               @@@        @@@    @@@@            @@@@             @@@       @@@@ ' " >> /root/.bashrc
+RUN echo "echo '      @@@@@@@@@                 @@@        @@@    @@@@            @@@@             @@@        @@@ ' " >> /root/.bashrc
+RUN echo "echo '         @@@@@       @@@@@@@    @@@@@@@@@@@@@@    @@@@@@@@@@@@@   @@@@@@@@@@@@@    @@@       @@@@ ' " >> /root/.bashrc
+RUN echo "echo '        @@@@@@      @@@@@@@@@   @@@@@@@@@@@@@@    @@@@@@@@@@@@@   @@@@@@@@@@@@@    @@@@@@@@@@@@@  ' " >> /root/.bashrc
+RUN echo "echo '      @@@@@@@@@                 @@@        @@@    @@@@            @@@@             @@@@@@@@@@     ' " >> /root/.bashrc
+RUN echo "echo '     @@@@   @@@@@               @@@        @@@    @@@@            @@@@             @@@            ' " >> /root/.bashrc
+RUN echo "echo '   @@@@@      @@@@              @@@        @@@    @@@@@@@@@@@@@@  @@@@@@@@@@@@@@   @@@            ' " >> /root/.bashrc
+RUN echo "echo '  @@@@         @@@@             @@@        @@@     @@@@@@@@@@@@    @@@@@@@@@@@@    @@@            ' " >> /root/.bashrc
+RUN echo "echo '  ' " >> /root/.bashrc
+RUN echo "echo '  ' " >> /root/.bashrc
+RUN echo "echo ' ' " >> /root/.bashrc
+
 ENTRYPOINT ["/bin/bash"]
