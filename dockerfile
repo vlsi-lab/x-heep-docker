@@ -60,6 +60,9 @@ COPY environment.yml .
 RUN /opt/conda/bin/conda env create -f environment.yml
 RUN rm environment.yml
 
+# install picocom
+RUN apt update && apt install -y picocom
+
 # Pull busybox image
 FROM busybox:1.35.0-uclibc as busybox
  
@@ -101,6 +104,14 @@ COPY --from=builder /usr/bin/tail /usr/bin/tail
 COPY --from=builder /usr/bin/pkill /usr/bin/pkill
 COPY --from=builder /usr/bin/xargs /usr/bin/xargs
 COPY --from=builder /usr/bin/chmod /usr/bin/chmod
+COPY --from=builder /usr/bin/grep /usr/bin/grep
+COPY --from=builder /usr/bin/awk /usr/bin/awk
+COPY --from=builder /usr/bin/tac /usr/bin/tac
+COPY --from=builder /usr/bin/cut /usr/bin/cut
+COPY --from=builder /usr/bin/bc /usr/bin/bc
+COPY --from=builder /usr/bin/pkg-config /usr/bin/pkg-config
+COPY --from=builder /usr/bin/cc /usr/bin/cc
+COPY --from=builder /usr/bin/picocom /usr/bin/picocom
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
