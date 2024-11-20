@@ -5,7 +5,7 @@ ARG verilator_version=4.210
 ARG verible_version=v0.0-1824-ga3b5bedf
 
 # First stage: build the environment
-FROM ubuntu:20.04 as builder
+FROM ubuntu:22.04 as builder
 
 # Import environment variables from global scope
 ARG riscv
@@ -25,7 +25,9 @@ RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y lcov \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GCC-RISC-V toolchain
-RUN git clone --branch 2022.01.17 --recursive https://github.com/riscv/riscv-gnu-toolchain /riscv-gnu-toolchain
+RUN git clone --branch 2022.01.17 https://github.com/riscv/riscv-gnu-toolchain /riscv-gnu-toolchain
+RUN cd /riscv-gnu-toolchain && grep -l 'url = git://' .gitmodules && sed -i 's|url = git://|url = https://|g' .gitmodules
+RUN cd /riscv-gnu-toolchain && git submodule sync && git submodule update --init --recursive
 RUN cd /riscv-gnu-toolchain && ./configure --prefix=/tools/riscv --with-arch=rv32imc --with-abi=ilp32
 RUN apt update && apt install -y gcc build-essential make
 RUN cd /riscv-gnu-toolchain && make -j$(nproc)
@@ -112,22 +114,24 @@ COPY --from=builder /usr/bin/bc /usr/bin/bc
 COPY --from=builder /usr/bin/pkg-config /usr/bin/pkg-config
 COPY --from=builder /usr/bin/cc /usr/bin/cc
 COPY --from=builder /usr/bin/picocom /usr/bin/picocom
+COPY --from=builder /usr/bin/realpath /usr/bin/realpath
+COPY --from=builder /usr/bin/touch /usr/bin/touch
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
 COPY --from=builder /usr/share/gcc /usr/share/gcc
 COPY --from=builder /usr/share/perl /usr/share/perlgi
 COPY --from=builder /usr/share/cmake /usr/share/cmake
-COPY --from=builder /usr/share/cmake-3.16 /usr/share/cmake-3.16
+COPY --from=builder /usr/share/cmake-3.22 /usr/share/cmake-3.22
 COPY --from=builder /usr/share/perl5 /usr/share/perl5
-COPY --from=builder /usr/share/perl/5.30 /usr/share/perl/5.30
+COPY --from=builder /usr/share/perl/5.34 /usr/share/perl/5.34
 COPY --from=builder /usr/share/git-core/templates /usr/share/git-core/templates
 COPY --from=builder /lib /lib
 COPY --from=builder /usr/lib/git-core /usr/lib/git-core
 COPY --from=builder /usr/lib/gcc /usr/lib/gcc
 COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-COPY --from=builder /usr/lib/x86_64-linux-gnu/perl/5.30 /usr/lib/x86_64-linux-gnu/perl/5.30
-COPY --from=builder /usr/lib/x86_64-linux-gnu/perl5/5.30 /usr/lib/x86_64-linux-gnu/perl5/5.30
+COPY --from=builder /usr/lib/x86_64-linux-gnu/perl/5.34 /usr/lib/x86_64-linux-gnu/perl/5.34
+COPY --from=builder /usr/lib/x86_64-linux-gnu/perl5/5.34 /usr/lib/x86_64-linux-gnu/perl5/5.34
 COPY --from=builder /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl-base
 
 # Copy perl binaries from builder
