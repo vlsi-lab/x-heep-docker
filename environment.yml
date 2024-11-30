@@ -14,3 +14,4 @@ dependencies:
     - jsonref==0.2
     - git+https://github.com/davideschiavone/fusesoc.git@ot#egg=fusesoc >= 1.11.0
     - git+https://github.com/davideschiavone/edalize.git
+    - numpy

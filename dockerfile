@@ -1,11 +1,11 @@
 # Author: Luigi Giuffrida
 
 ARG riscv=/tools/riscv
-ARG verilator_version=4.210
-ARG verible_version=v0.0-1824-ga3b5bedf
+ARG verilator_version=5.028
+ARG verible_version=v0.0-3858-g660d1664
 
 # First stage: build the environment
-FROM ubuntu:22.04 as builder
+FROM ubuntu:24.04 as builder
 
 # Import environment variables from global scope
 ARG riscv
@@ -17,7 +17,7 @@ ENV VERIBLE_VERSION=${verible_version}
 
 # Install dependancies
 RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y lcov \
-    libelf1 libelf-dev libftdi1-2 libftdi1-dev libncurses5 libssl-dev libglib2.0-dev \
+    libelf1 libelf-dev libftdi1-2 libftdi1-dev libssl-dev libglib2.0-dev \
     libudev-dev libusb-1.0-0 lsb-release texinfo autoconf automake autotools-dev \
     libmpc-dev libmpfr-dev libgmp-dev gperf libtool patchutils bc zlib1g-dev \
     cmake flex bison libexpat-dev gawk tree xterm python3-venv python3-dev ninja-build \
@@ -25,9 +25,8 @@ RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y lcov \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GCC-RISC-V toolchain
-RUN git clone --branch 2022.01.17 https://github.com/riscv/riscv-gnu-toolchain /riscv-gnu-toolchain
-RUN cd /riscv-gnu-toolchain && grep -l 'url = git://' .gitmodules && sed -i 's|url = git://|url = https://|g' .gitmodules
-RUN cd /riscv-gnu-toolchain && git submodule sync && git submodule update --init --recursive
+RUN git clone --branch 2024.11.22 https://github.com/riscv/riscv-gnu-toolchain /riscv-gnu-toolchain
+# RUN cd /riscv-gnu-toolchain && git submodule sync && git submodule update --init --recursive
 RUN cd /riscv-gnu-toolchain && ./configure --prefix=/tools/riscv --with-arch=rv32imc --with-abi=ilp32
 RUN apt update && apt install -y gcc build-essential make
 RUN cd /riscv-gnu-toolchain && make -j$(nproc)
@@ -35,21 +34,22 @@ RUN rm -rf /riscv-gnu-toolchain
 
 # Install clang
 RUN git clone https://github.com/llvm/llvm-project.git /llvm-project
-RUN cd /llvm-project && git checkout llvmorg-14.0.0 && mkdir build 
+RUN cd /llvm-project && git checkout llvmorg-19.1.4 && mkdir build 
 RUN cd /llvm-project/build && cmake -G "Unix Makefiles" -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$RISCV -DLLVM_TARGETS_TO_BUILD="RISCV" ../llvm
 RUN cd /llvm-project/build && cmake --build . --target install -j$(nproc)
 RUN rm -rf /llvm-project
 
 # Install Verilator
 RUN git clone https://github.com/verilator/verilator.git && cd verilator && git checkout v$VERILATOR_VERSION
+RUN apt update && apt install -y autoconf automake autotools-dev libmpc-dev libmpfr-dev libgmp-dev gperf help2man
 RUN cd /verilator && autoconf && ./configure --prefix=/tools/verilator/$VERILATOR_VERSION
 RUN cd /verilator && make -j$(nproc) && make install
 RUN rm -rf /verilator
 
 # Install Verible
-RUN wget https://github.com/google/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz
-RUN mkdir -p /tools/verible && tar -xf verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz -C /tools/verible/
-RUN rm verible-${VERIBLE_VERSION}-Ubuntu-20.04-focal-x86_64.tar.gz
+RUN wget https://github.com/chipsalliance/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz
+RUN mkdir -p /tools/verible && tar -xf verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz -C /tools/verible/
+RUN rm verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz
 
 # Install conda
 RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -116,22 +116,28 @@ COPY --from=builder /usr/bin/cc /usr/bin/cc
 COPY --from=builder /usr/bin/picocom /usr/bin/picocom
 COPY --from=builder /usr/bin/realpath /usr/bin/realpath
 COPY --from=builder /usr/bin/touch /usr/bin/touch
+COPY --from=builder /usr/bin/cp /usr/bin/cp
+COPY --from=builder /usr/bin/mv /usr/bin/mv
+COPY --from=builder /usr/bin/sort /usr/bin/sort
+COPY --from=builder /usr/bin/head /usr/bin/head
+COPY --from=builder /usr/bin/ln /usr/bin/ln
+COPY --from=builder /usr/bin/uname /usr/bin/uname
 
 # Copy libraries from builder
 COPY --from=builder /usr/include/ /usr/include/
 COPY --from=builder /usr/share/gcc /usr/share/gcc
 COPY --from=builder /usr/share/perl /usr/share/perlgi
 COPY --from=builder /usr/share/cmake /usr/share/cmake
-COPY --from=builder /usr/share/cmake-3.22 /usr/share/cmake-3.22
+COPY --from=builder /usr/share/cmake-3.28 /usr/share/cmake-3.28
 COPY --from=builder /usr/share/perl5 /usr/share/perl5
-COPY --from=builder /usr/share/perl/5.34 /usr/share/perl/5.34
+COPY --from=builder /usr/share/perl/5.38 /usr/share/perl/5.38
 COPY --from=builder /usr/share/git-core/templates /usr/share/git-core/templates
 COPY --from=builder /lib /lib
 COPY --from=builder /usr/lib/git-core /usr/lib/git-core
 COPY --from=builder /usr/lib/gcc /usr/lib/gcc
 COPY --from=builder /usr/lib/x86_64-linux-gnu /usr/lib/x86_64-linux-gnu
-COPY --from=builder /usr/lib/x86_64-linux-gnu/perl/5.34 /usr/lib/x86_64-linux-gnu/perl/5.34
-COPY --from=builder /usr/lib/x86_64-linux-gnu/perl5/5.34 /usr/lib/x86_64-linux-gnu/perl5/5.34
+COPY --from=builder /usr/lib/x86_64-linux-gnu/perl/5.38 /usr/lib/x86_64-linux-gnu/perl/5.38
+COPY --from=builder /usr/lib/x86_64-linux-gnu/perl5/5.38 /usr/lib/x86_64-linux-gnu/perl5/5.38
 COPY --from=builder /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl-base
 
 # Copy perl binaries from builder
@@ -147,7 +153,6 @@ COPY --from=busybox /bin/dirname /bin/dirname
 COPY --from=busybox /bin/rm /bin/rm
 COPY --from=busybox /bin/which /bin/which
 COPY --from=busybox /bin/ls /bin/ls
-COPY --from=busybox /bin/ln /bin/ln
 COPY --from=busybox /bin/echo /bin/echo
 COPY --from=busybox /bin/tee /bin/tee
 COPY --from=busybox /bin/sed /bin/sed
