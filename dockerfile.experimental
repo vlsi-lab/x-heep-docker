@@ -159,6 +159,10 @@ COPY --from=busybox /bin/sed /bin/sed
 COPY --from=busybox /bin/find /bin/find
 COPY --from=busybox /bin/tr /bin/tr
 
+LABEL maintainer="Luigi Giuffrida <luigi.giuffrida.98@gmail.com>"
+LABEL version="experimental"
+LABEL description="This is a custom image for the X-HEEP project"
+
 # Set PATH
 ENV PATH=/tools/verible/verible-${VERIBLE_VERSION}/bin:/tools/verilator/${VERILATOR_VERSION}/bin:/opt/conda/envs/core-v-mini-mcu/bin:/opt/conda/condabin:${RISCV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
@@ -167,7 +171,6 @@ WORKDIR /workspace/x-heep
 
 # Set conda environment
 RUN conda init bash && echo "conda activate core-v-mini-mcu" >> /root/.bashrc
-
 
 
 RUN echo "echo ' ' " >> /root/.bashrc
