@@ -25,7 +25,10 @@ RUN apt update && DEBIAN_FRONTEND=noninteractive apt install -y lcov \
     && rm -rf /var/lib/apt/lists/*
 
 # Install GCC-RISC-V toolchain
-RUN wget -qO- https://buildbot.embecosm.com/job/corev-gcc-ubuntu2204/47/artifact/corev-openhw-gcc-ubuntu2204-20240530.tar.gz | tar -xz -C $RISCV
+RUN mkdir -p /corev
+RUN wget -qO- https://buildbot.embecosm.com/job/corev-gcc-ubuntu2204/47/artifact/corev-openhw-gcc-ubuntu2204-20240530.tar.gz | tar -xz -C /corev
+RUN mkdir -p $RISCV
+RUN mv /corev/corev-openhw-gcc-ubuntu2204-20240530 $RISCV
 
 # Install clang
 RUN git clone https://github.com/llvm/llvm-project.git /llvm-project
@@ -38,7 +41,7 @@ RUN rm -rf /llvm-project
 RUN git clone https://github.com/verilator/verilator.git && cd verilator && git checkout v$VERILATOR_VERSION
 RUN apt update && apt install -y autoconf automake autotools-dev libmpc-dev libmpfr-dev libgmp-dev gperf help2man
 RUN cd /verilator && autoconf && ./configure --prefix=/tools/verilator/$VERILATOR_VERSION
-RUN cd /verilator && make -j$(nproc) && make install
+RUN cd /verilator && sed -i '1i#include <memory>' /verilator/src/V3Const.cpp && make -j$(nproc) && make install
 RUN rm -rf /verilator
 
 # Install Verible
